@@ -1,0 +1,6 @@
+{
+  "name": "PPC Calculator",
+  "description": "A high-performance pay-per-click campaign calculator with multi-platform projection modeling and reporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

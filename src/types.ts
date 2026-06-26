@@ -43,3 +43,17 @@ export interface AppSettings {
   googleBenchmarks: PlatformBenchmarks;
   metaBenchmarks: PlatformBenchmarks;
 }
+
+export interface SavedCampaign {
+  id: number | string;
+  name: string;
+  platform: PlatformType;
+  adSpend: number;
+  cpc: number;
+  conversionRate: number;
+  avgOrderValue: number;
+  profitMargin: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

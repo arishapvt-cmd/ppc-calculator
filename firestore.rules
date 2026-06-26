@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable, hardened global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for User
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt'])
+        && data.keys().size() == 3
+        && data.uid is string
+        && data.uid.size() <= 128
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.email.size() <= 256
+        && (data.createdAt == request.time || data.createdAt is timestamp);
+    }
+
+    // Validation helper for Campaign
+    function isValidCampaign(data) {
+      return data.keys().hasAll([
+        'userId', 'name', 'platform', 'adSpend', 'cpc',
+        'conversionRate', 'avgOrderValue', 'profitMargin', 'createdAt', 'updatedAt'
+      ])
+        && data.keys().size() == 10
+        && data.userId is string
+        && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.platform is string
+        && (data.platform == 'google' || data.platform == 'meta')
+        && (data.adSpend is number || data.adSpend is int || data.adSpend is float)
+        && data.adSpend >= 0.0
+        && (data.cpc is number || data.cpc is int || data.cpc is float)
+        && data.cpc >= 0.0
+        && (data.conversionRate is number || data.conversionRate is int || data.conversionRate is float)
+        && data.conversionRate >= 0.0
+        && (data.avgOrderValue is number || data.avgOrderValue is int || data.avgOrderValue is float)
+        && data.avgOrderValue >= 0.0
+        && (data.profitMargin is number || data.profitMargin is int || data.profitMargin is float)
+        && data.profitMargin >= 0.0
+        && (data.createdAt == request.time || data.createdAt is timestamp)
+        && (data.updatedAt == request.time || data.updatedAt is timestamp);
+    }
+
+    // Match block for users collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId) && isValidId(userId);
+      allow create, update: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow delete: if false;
+    }
+
+    // Match block for campaigns collection
+    match /campaigns/{campaignId} {
+      allow get: if isSignedIn() && isOwner(existing().userId) && isValidId(campaignId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(campaignId) && isOwner(incoming().userId) && isValidCampaign(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isValidId(campaignId) && isOwner(existing().userId) && isOwner(incoming().userId) && isValidCampaign(incoming()) && incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'platform', 'adSpend', 'cpc', 'conversionRate', 'avgOrderValue', 'profitMargin', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(campaignId) && isOwner(existing().userId);
+    }
+  }
+}

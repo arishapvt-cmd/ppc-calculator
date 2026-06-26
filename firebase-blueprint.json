@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID matching Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "PPC Campaign scenario settings and variables",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this campaign" },
+        "name": { "type": "string", "description": "Name of the campaign scenario" },
+        "platform": { "type": "string", "enum": ["google", "meta"], "description": "PPC Platform type" },
+        "adSpend": { "type": "number", "description": "Monthly ad spend budget" },
+        "cpc": { "type": "number", "description": "Cost per click" },
+        "conversionRate": { "type": "number", "description": "Conversion rate percentage" },
+        "avgOrderValue": { "type": "number", "description": "Average order value" },
+        "profitMargin": { "type": "number", "description": "Profit margin percentage" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Created at timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Updated at timestamp" }
+      },
+      "required": ["userId", "name", "platform", "adSpend", "cpc", "conversionRate", "avgOrderValue", "profitMargin"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "campaigns/{campaignId}": {
+      "schema": "Campaign",
+      "description": "Saved campaign projection scenarios"
+    }
+  }
+}
